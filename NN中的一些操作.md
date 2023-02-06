@@ -123,3 +123,26 @@ def init_weights(m):
 net.apply(init_weights)
 ```
 
+## 3、Batch Normalization（批量规范化）
+
+数据预处理的方式通常会对最终结果产生巨大影响，比如在[1.0_Pytorch_LinearRegression.ipynb](./1.0_Pytorch_LinearRegression.ipynb)中，如果没有进行归一化处理，权重将无法进行更新。
+
+* 直观地说，这种标准化可以很好地与我们的优化器配合使用，因为它可以将参数的量级进行统一。
+* 对于典型的多层感知机或卷积神经网络。当我们训练时，中间层中的变量（例如，多层感知机中的仿射变换输出）可能具有更大的变化范围：不论是沿着从输入到输出的层，同一层中的单元，或是随着时间的推移，模型参数的随着训练更新变幻莫测。 Batch Normalization的发明者非正式地假设，这些变量分布中的这种偏移可能会阻碍网络的收敛。 直观地说，我们可能会猜想，如果一个层的可变值是另一层的100倍，这可能需要对学习率进行补偿调整。
+* 深层的网络很复杂，而且往往更容易过拟合。这意味着正则化变得更加关键。一种常用的正则化技术是噪声注入（==noise injection==），它还充当了[Drop out](# 2、神经网络Dropout((暂退法))的基础。
+
+==Tips==：运用`Batch Normalization`要注意Batch的大小，比如对于1个数据来讲，数据的均值为它本身，规范化后相当于将数据本身清除了。只有使用足够大的小批量，批量规范化这种方法才是有效且稳定的。所以，使用`Batch Normalization`时 Batchsize 的选择比 Normalization 更重要。
+
+定义：$\mathbf{x} \in \mathcal{B}$ 为来自小批量$\mathcal{B}$的输入，**scale parameter** $\boldsymbol{\gamma}$ ，**shift parameter** $\boldsymbol{\beta}$ 
+
+注 ：$\boldsymbol{\gamma}$ 和 $\boldsymbol{\beta}$ 尺寸和 $\mathbf{x}$ 一样同样是需要学习的参数
+$$
+\begin{aligned}
+\mathrm{BN}(\mathbf{x}) &= \boldsymbol{\gamma} \odot \frac{\mathbf{x} - \hat{\boldsymbol{\mu}}_\mathcal{B}}{\hat{\boldsymbol{\sigma}}_\mathcal{B}} + \boldsymbol{\beta}
+\\
+ \hat{\boldsymbol{\mu}}_\mathcal{B} &= \frac{1}{|\mathcal{B}|} \sum_{\mathbf{x} \in \mathcal{B}} \mathbf{x},\\
+\hat{\boldsymbol{\sigma}}_\mathcal{B}^2 &= \frac{1}{|\mathcal{B}|} \sum_{\mathbf{x} \in \mathcal{B}} (\mathbf{x} - \hat{\boldsymbol{\mu}}_{\mathcal{B}})^2 + \epsilon \\(\epsilon>0&\text为一个小的常量,确保不会除以0)
+\end{aligned}
+$$
+由于尚未在理论上明确的原因，优化中的各种噪声源通常会导致更快的训练和较少的过拟合：这种变化似乎是正则化的一种形式。
+
